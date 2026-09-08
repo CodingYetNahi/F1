@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Racing Championship - Grand Prix Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1a2a6c, #b21f1f, #fdbb2d);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #111;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #1e3f20;
+        }
+
+        #ui {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .hud-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-value {
+            color: #00e5ff;
+            font-family: monospace;
+            font-size: 18px;
+        }
+
+        #minimap {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 140px;
+            height: 100px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        #soundToggle {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #soundToggle:hover {
+            transform: scale(1.1);
+            background: rgba(0,0,0,0.9);
+        }
+
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.88);
+            backdrop-filter: blur(6px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 20;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay-screen h1 {
+            font-size: 52px;
+            font-weight: 900;
+            font-style: italic;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #ff0000, #ff7300);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 20px rgba(255, 0, 0, 0.3);
+        }
+
+        .overlay-screen p {
+            color: #cbd5e1;
+            font-size: 18px;
+            margin-bottom: 25px;
+        }
+
+        .btn-primary {
+            padding: 14px 40px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #e10600, #a00400);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(225, 6, 0, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 6px 20px rgba(225, 6, 0, 0.6);
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            background: rgba(0,0,0,0.4);
+            padding: 4px 12px;
+            border-radius: 12px;
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <canvas id="minimap" width="140" height="100"></canvas>
+        
+        <div id="ui">
+            <div class="hud-card">🏁 POS <span id="position" class="hud-value">1/6</span></div>
+            <div class="hud-card">⏱️ LAP <span id="lap" class="hud-value">1/3</span></div>
+            <div class="hud-card">🏎️ SPEED <span id="speed" class="hud-value">0</span> <small>KM/H</small></div>
+            <div class="hud-card">⚡ BEST <span id="bestLap" class="hud-value">--:--</span></div>
+        </div>
+
+        <button id="soundToggle">🔊</button>
+
+        <div id="startScreen" class="overlay-screen">
+            <h1>F1 GRAND PRIX</h1>
+            <p>CHAMPS EDITION</p>
+            <button class="btn-primary" onclick="startGame()">Start Race</button>
+        </div>
+
+        <div id="gameOverScreen" class="overlay-screen hidden">
+            <h1>RACE FINISHED</h1>
+            <p id="finalPosition" style="font-size: 28px; font-weight: bold; color: #00e5ff;"></p>
+            <button class="btn-primary" onclick="restartGame()">Race Again</button>
+        </div>
+
+        <div class="controls-hint">
+            <b>Controls:</b> WASD or Arrow Keys to Drive
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const mapCanvas = document.getElementById('minimap');
+        const mapCtx = mapCanvas.getContext('2d');
+        
+        let gameRunning = false;
+        let soundEnabled = true;
+        let audioContext = null;
+        let skidMarks = [];
+
+        // Track Configuration
+        const track = {
+            centerX: 400,
+            centerY: 300,
+            radiusX: 280,
+            radiusY: 180,
+            width: 90
+        };
+
+        // Inputs
+        const keys = {};
+        document.addEventListener('keydown', (e) => { keys[e.key] = true; });
+        document.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+        // Web Audio API
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled || !audioContext) return;
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            const now = audioContext.currentTime;
+            if (type === 'start') {
+                osc.frequency.setValueAtTime(440, now);
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'bestLap') {
+                osc.frequency.setValueAtTime(587.33, now);
+                osc.frequency.setValueAtTime(880, now + 0.1);
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'finish') {
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.type = 'triangle';
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+                osc.start(now);
+                osc.stop(now + 0.8);
+            }
+        }
+
+        class F1Car {
+            constructor(x, y, color, isPlayer = false, number = 1) {
+                this.x = x;
+                this.y = y;
+                this.angle = 0;
+                this.speed = 0;
+                this.maxSpeed = isPlayer ? 8.5 : 7.2 + Math.random() * 0.8;
+                this.acceleration = 0.18;
+                this.friction = 0.97;
+                this.turnSpeed = 0.045;
+                this.color = color;
+                this.isPlayer = isPlayer;
+                this.number = number;
+                
+                // Progress Tracking
+                this.lap = 1;
+                this.sector = 0; // 0: Top-Right, 1: Bottom-Right, 2: Bottom-Left, 3: Top-Left
+                this.lapStartTime = Date.now();
+                this.bestLap = Infinity;
+                this.finished = false;
+                this.finishTime = 0;
+                this.offTrack = false;
+            }
+
+            update() {
+                if (this.finished) {
+                    this.speed *= 0.95;
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed;
+                    return;
+                }
+
+                if (this.isPlayer) {
+                    if (keys.ArrowUp || keys.w || keys.W) this.speed += this.acceleration;
+                    if (keys.ArrowDown || keys.s || keys.S) this.speed -= this.acceleration * 0.6;
+                    
+                    const speedRatio = Math.min(Math.abs(this.speed) / this.maxSpeed, 1);
+                    if (keys.ArrowLeft || keys.a || keys.A) this.angle -= this.turnSpeed * (0.3 + 0.7 * speedRatio);
+                    if (keys.ArrowRight || keys.d || keys.D) this.angle += this.turnSpeed * (0.3 + 0.7 * speedRatio);
+                } else {
+                    this.updateAI();
+                }
+
+                // Off-track check
+                const dx = (this.x - track.centerX) / track.radiusX;
+                const dy = (this.y - track.centerY) / track.radiusY;
+                const distFromCenterCurve = Math.sqrt(dx * dx + dy * dy);
+                
+                // Track boundary calculations
+                this.offTrack = Math.abs(distFromCenterCurve - 1.0) > (track.width / 2 / track.radiusX);
+                const currentFriction = this.offTrack ? 0.88 : this.friction;
+                
+                this.speed *= currentFriction;
+
+                // Speed limits
+                const currentMaxSpeed = this.offTrack ? this.maxSpeed * 0.4 : this.maxSpeed;
+                if (this.speed > currentMaxSpeed) this.speed = currentMaxSpeed;
+                if (this.speed < -currentMaxSpeed * 0.3) this.speed = -currentMaxSpeed * 0.3;
+
+                // Apply movement
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+
+                // Add tire skid marks on heavy turns
+                if (Math.abs(this.speed) > 4 && (keys.ArrowLeft || keys.ArrowRight || !this.isPlayer)) {
+                    if (Math.random() > 0.4) {
+                        skidMarks.push({ x: this.x, y: this.y, alpha: 0.4 });
+                    }
+                }
+
+                this.updateProgress();
+            }
+
+            updateAI() {
+                // Ideal track point relative to current angle
+                const aheadAngle = this.angle + 0.4;
+                const targetX = track.centerX + Math.cos(aheadAngle) * track.radiusX;
+                const targetY = track.centerY + Math.sin(aheadAngle) * track.radiusY;
+
+                const desiredAngle = Math.atan2(targetY - this.y, targetX - this.x);
+                let diff = desiredAngle - this.angle;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+
+                this.angle += Math.sign(diff) * Math.min(Math.abs(diff), this.turnSpeed);
+                this.speed += this.acceleration * 0.9;
+            }
+
+            updateProgress() {
+                // Determine sector by position relative to center
+                const relX = this.x - track.centerX;
+                const relY = this.y - track.centerY;
+
+                let currentSector = 0;
+                if (relX >= 0 && relY < 0) currentSector = 0;
+                else if (relX >= 0 && relY >= 0) currentSector = 1;
+                else if (relX < 0 && relY >= 0) currentSector = 2;
+                else if (relX < 0 && relY < 0) currentSector = 3;
+
+                // Lap increments when crossing from Sector 3 -> Sector 0 across the finish line (y=300, x>400)
+                if (this.sector === 3 && currentSector === 0) {
+                    const lapTime = Date.now() - this.lapStartTime;
+                    if (lapTime < this.bestLap) {
+                        this.bestLap = lapTime;
+                        if (this.isPlayer) playSound('bestLap');
+                    }
+                    this.lapStartTime = Date.now();
+                    this.lap++;
+
+                    if (this.lap > 3 && !this.finished) {
+                        this.finished = true;
+                        this.finishTime = Date.now();
+                        if (this.isPlayer) endGame();
+                    }
+                }
+
+                this.sector = currentSector;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(-18, -9, 36, 18);
+
+                // Main Chassis
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-16, -7, 32, 14);
+
+                // Cockpit
+                ctx.fillStyle = '#111';
+                ctx.fillRect(-3, -4, 10, 8);
+
+                // Front & Rear Wings
+                ctx.fillStyle = '#222';
+                ctx.fillRect(12, -10, 5, 20); // Front
+                ctx.fillRect(-18, -11, 6, 22); // Rear
+
+                // Wheels
+                ctx.fillStyle = '#000';
+                ctx.fillRect(6, -11, 7, 4);
+                ctx.fillRect(6, 7, 7, 4);
+                ctx.fillRect(-14, -11, 7, 4);
+                ctx.fillRect(-14, 7, 7, 4);
+
+                // Car Number
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.number, -8, 0);
+
+                ctx.restore();
+            }
+        }
+
+        // Initialize Entities
+        let playerCar;
+        let cars = [];
+        const colors = ['#e10600', '#0090ff', '#00e676', '#ffea00', '#ff6d00', '#d500f9'];
+
+        function initEntities() {
+            cars = [];
+            skidMarks = [];
+            playerCar = new F1Car(track.centerX + track.radiusX, track.centerY - 20, colors[0], true, 44);
+            cars.push(playerCar);
+
+            for (let i = 1; i < 6; i++) {
+                const startY = track.centerY - 20 - (i * 25);
+                const aiCar = new F1Car(track.centerX + track.radiusX, startY, colors[i], false, i * 12);
+                cars.push(aiCar);
+            }
+        }
+
+        function drawTrack() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Grass background
+            ctx.fillStyle = '#1e3f20';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Render Skid Marks
+            for (let i = skidMarks.length - 1; i >= 0; i--) {
+                const mark = skidMarks[i];
+                ctx.fillStyle = `rgba(0, 0, 0, ${mark.alpha})`;
+                ctx.fillRect(mark.x, mark.y, 3, 3);
+                mark.alpha -= 0.002;
+                if (mark.alpha <= 0) skidMarks.splice(i, 1);
+            }
+
+            // Kerbs (Red & White Outer Border)
+            ctx.strokeStyle = '#e10600';
+            ctx.lineWidth = track.width + 12;
+            ctx.beginPath();
+            ctx.ellipse(track.centerX, track.centerY, track.radiusX, track.radiusY, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.setLineDash([15, 15]);
+            ctx.lineWidth = track.width + 12;
+            ctx.beginPath();
+            ctx.ellipse(track.centerX, track.centerY, track.radiusX, track.radiusY, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset line dash
+
+            // Asphalt Track
+            ctx.strokeStyle = '#2c2d30';
+            ctx.lineWidth = track.width;
+            ctx.beginPath();
+            ctx.ellipse(track.centerX, track.centerY, track.radiusX, track.radiusY, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // White Inner/Outer Edges
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(track.centerX, track.centerY, track.radiusX - track.width / 2, track.radiusY - track.width / 2, 0, 0, Math.PI * 2);
+            ctx.ellipse(track.centerX, track.centerY, track.radiusX + track.width / 2, track.radiusY + track.width / 2, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Finish Line Grid
+            const finishX = track.centerX + track.radiusX;
+            const finishY = track.centerY;
+            ctx.fillStyle = '#ffffff';
+            for (let i = -track.width / 2; i < track.width / 2; i += 10) {
+                ctx.fillRect(finishX + (i % 20 === 0 ? 0 : 5), finishY + i, 5, 10);
+            }
+        }
+
+        function drawMinimap() {
+            mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+            mapCtx.strokeStyle = '#555';
+            mapCtx.lineWidth = 6;
+            mapCtx.beginPath();
+            mapCtx.ellipse(70, 50, 50, 30, 0, 0, Math.PI * 2);
+            mapCtx.stroke();
+
+            cars.forEach(car => {
+                const mapX = 70 + ((car.x - track.centerX) / track.radiusX) * 50;
+                const mapY = 50 + ((car.y - track.centerY) / track.radiusY) * 30;
+                mapCtx.fillStyle = car.isPlayer ? '#00e5ff' : car.color;
+                mapCtx.beginPath();
+                mapCtx.arc(mapX, mapY, car.isPlayer ? 4 : 2.5, 0, Math.PI * 2);
+                mapCtx.fill();
+            });
+        }
+
+        function updateUI() {
+            // Sort Leaderboard: By Lap first, then by Sector
+            const sorted = [...cars].sort((a, b) => {
+                if (a.lap !== b.lap) return b.lap - a.lap;
+                if (a.sector !== b.sector) return b.sector - a.sector;
+                // Distance to next sector center
+                return 0;
+            });
+
+            const pos = sorted.findIndex(c => c.isPlayer) + 1;
+            document.getElementById('position').textContent = `${pos}/6`;
+            document.getElementById('lap').textContent = `${Math.min(playerCar.lap, 3)}/3`;
+            document.getElementById('speed').textContent = Math.round(Math.abs(playerCar.speed) * 28);
+
+            if (playerCar.bestLap !== Infinity) {
+                document.getElementById('bestLap').textContent = (playerCar.bestLap / 1000).toFixed(2) + 's';
+            }
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            drawTrack();
+
+            cars.forEach(car => {
+                car.update();
+                car.draw();
+            });
+
+            drawMinimap();
+            updateUI();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            initAudio();
+            initEntities();
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            gameRunning = true;
+            playSound('start');
+            gameLoop();
+        }
+
+        function endGame() {
+            gameRunning = false;
+            playSound('finish');
+
+            const sorted = [...cars].sort((a, b) => a.finishTime - b.finishTime);
+            const pos = sorted.findIndex(c => c.isPlayer) + 1;
+
+            const msg = pos === 1 ? '🏆 1ST PLACE - VICTORY!' : pos === 2 ? '🥈 2ND PLACE - PODIUM!' : pos === 3 ? '🥉 3RD PLACE - PODIUM!' : `FINISHED P${pos}`;
+            document.getElementById('finalPosition').textContent = msg;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+        });
+
+        // Initial render
+        initEntities();
+        drawTrack();
+        cars.forEach(c => c.draw());
+    </script>
+</body>
+</html>

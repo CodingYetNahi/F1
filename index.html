@@ -3,37 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-select=none">
-    <title>F1 Horizon Racing</title>
+    <title>F1 World Championship</title>
     <style>
+        :root {
+            --apple-glass: rgba(255, 255, 255, 0.12);
+            --apple-glass-border: rgba(255, 255, 255, 0.2);
+            --apple-dark-glass: rgba(0, 0, 0, 0.55);
+            --apple-red: #ff3b30;
+            --apple-blue: #0a84ff;
+            --apple-green: #30d158;
+            --apple-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            font-family: var(--apple-font);
         }
 
         body {
-            background: #111;
+            background-color: #050507;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             touch-action: none;
+            color: #ffffff;
         }
 
         #gameContainer {
             position: relative;
             width: 100%;
-            max-width: 480px;
+            max-width: 440px;
             height: 100vh;
-            max-height: 800px;
+            max-height: 840px;
             background: #000;
-            box-shadow: 0 0 30px rgba(0,255,200,0.2);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2);
             overflow: hidden;
-            border-radius: 12px;
+            border-radius: 28px;
         }
 
         #gameCanvas {
@@ -42,116 +53,252 @@
             display: block;
         }
 
-        #ui {
+        /* Top Header HUD */
+        #hud {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            right: 15px;
+            top: 20px;
+            left: 16px;
+            right: 16px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
             z-index: 10;
             pointer-events: none;
         }
 
-        .hud-card {
-            background: rgba(0, 0, 0, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            backdrop-filter: blur(4px);
+        .hud-pill {
+            background: var(--apple-dark-glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--apple-glass-border);
+            padding: 8px 16px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
-        .hud-value {
-            color: #00e5ff;
-            font-family: monospace;
+        .hud-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .hud-val {
             font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            font-variant-numeric: tabular-nums;
         }
 
-        /* Touch Control Overlay */
-        #touchControls {
+        .hud-val.highlight {
+            color: var(--apple-blue);
+        }
+
+        /* Leaderboard Widget */
+        #leaderboard {
             position: absolute;
-            bottom: 20px;
-            left: 0;
-            width: 100%;
-            height: 140px;
+            top: 75px;
+            right: 16px;
+            width: 120px;
+            background: var(--apple-dark-glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--apple-glass-border);
+            border-radius: 16px;
+            padding: 10px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .lb-title {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 6px;
+        }
+
+        .lb-row {
             display: flex;
             justify-content: space-between;
-            padding: 0 20px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 0;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .lb-row.player {
+            color: var(--apple-blue);
+            font-weight: 800;
+        }
+
+        /* Touch Controls Area */
+        #touchControls {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 24px;
             z-index: 15;
         }
 
         .control-group {
             display: flex;
-            gap: 15px;
+            gap: 12px;
         }
 
-        .btn-touch {
-            width: 65px;
-            height: 65px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+        .btn-apple {
+            width: 64px;
+            height: 64px;
+            background: var(--apple-glass);
+            backdrop-filter: blur(25px) saturate(200%);
+            -webkit-backdrop-filter: blur(25px) saturate(200%);
+            border: 1px solid var(--apple-glass-border);
             border-radius: 50%;
             color: white;
-            font-size: 22px;
+            font-size: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(5px);
-            touch-action: manipulation;
+            transition: all 0.15s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
 
-        .btn-touch:active {
-            background: rgba(0, 229, 255, 0.5);
-            transform: scale(0.95);
+        .btn-apple:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .btn-pedal {
             width: 60px;
-            height: 80px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: bold;
+            height: 75px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
-        .btn-gas { background: rgba(0, 230, 118, 0.3); border-color: #00e676; }
-        .btn-brake { background: rgba(255, 23, 68, 0.3); border-color: #ff1744; }
+        .btn-gas {
+            background: rgba(48, 209, 88, 0.2);
+            border-color: rgba(48, 209, 88, 0.4);
+            color: var(--apple-green);
+        }
 
-        .overlay-screen {
+        .btn-brake {
+            background: rgba(255, 59, 48, 0.2);
+            border-color: rgba(255, 59, 48, 0.4);
+            color: var(--apple-red);
+        }
+
+        /* Overlays & Apple Modals */
+        .apple-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: white;
+            padding: 32px;
+            text-align: center;
             z-index: 20;
+            transition: opacity 0.4s ease;
         }
 
-        .overlay-screen h1 {
-            font-size: 36px;
-            color: #ff0055;
-            text-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
-            margin-bottom: 10px;
+        .apple-card {
+            background: var(--apple-dark-glass);
+            border: 1px solid var(--apple-glass-border);
+            border-radius: 28px;
+            padding: 32px 24px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .btn-action {
-            padding: 12px 30px;
-            font-size: 18px;
-            background: #ff0055;
-            color: white;
+        .apple-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #A1A1A6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .apple-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        .apple-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 18px;
             border: none;
-            border-radius: 25px;
+            background: var(--apple-blue);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
             cursor: pointer;
-            font-weight: bold;
-            margin-top: 20px;
-            box-shadow: 0 4px 15px rgba(255,0,85,0.4);
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3);
+        }
+
+        .apple-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(10, 132, 255, 0.4);
+        }
+
+        .apple-btn:active {
+            transform: scale(0.98);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-lbl {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-top: 2px;
         }
 
         .hidden { display: none !important; }
@@ -161,32 +308,91 @@
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
 
-        <div id="ui">
-            <div class="hud-card">🏎️ <span id="speed" class="hud-value">0</span> <small>KM/H</small></div>
-            <div class="hud-card">🚩 SCORE <span id="score" class="hud-value">0</span></div>
+        <!-- Top HUD -->
+        <div id="hud">
+            <div class="hud-pill">
+                <div>
+                    <div class="hud-label">Race</div>
+                    <div class="hud-val highlight" id="levelDisplay">1/5</div>
+                </div>
+            </div>
+            <div class="hud-pill">
+                <div>
+                    <div class="hud-label">Rank</div>
+                    <div class="hud-val" id="rankDisplay">6th</div>
+                </div>
+            </div>
+            <div class="hud-pill">
+                <div>
+                    <div class="hud-label">Distance</div>
+                    <div class="hud-val" id="distDisplay">0m</div>
+                </div>
+            </div>
         </div>
 
+        <!-- Leaderboard -->
+        <div id="leaderboard">
+            <div class="lb-title">Standings</div>
+            <div id="lbRows"></div>
+        </div>
+
+        <!-- Touch Controls -->
         <div id="touchControls">
             <div class="control-group">
-                <div class="btn-touch" id="btnLeft">◀</div>
-                <div class="btn-touch" id="btnRight">▶</div>
+                <div class="btn-apple" id="btnLeft">‹</div>
+                <div class="btn-apple" id="btnRight">›</div>
             </div>
             <div class="control-group">
-                <div class="btn-touch btn-pedal btn-brake" id="btnBrake">BRAKE</div>
-                <div class="btn-touch btn-pedal btn-gas" id="btnGas">GAS</div>
+                <div class="btn-apple btn-pedal btn-brake" id="btnBrake">Brake</div>
+                <div class="btn-apple btn-pedal btn-gas" id="btnGas">Drive</div>
             </div>
         </div>
 
-        <div id="startScreen" class="overlay-screen">
-            <h1>F1 HORIZON</h1>
-            <p>Infinite Track Challenge</p>
-            <button class="btn-action" onclick="startGame()">START RACE</button>
+        <!-- Start Screen Modal -->
+        <div id="startScreen" class="apple-overlay">
+            <div class="apple-card">
+                <div class="apple-title">F1 World Tour</div>
+                <div class="apple-subtitle" id="trackName">Level 1 — Bahrain GP</div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-val" id="raceDist">1,000m</div>
+                        <div class="stat-lbl">Target</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val">Top 3</div>
+                        <div class="stat-lbl">Qualify</div>
+                    </div>
+                </div>
+                <button class="apple-btn" onclick="startGame()">Start Race</button>
+            </div>
         </div>
 
-        <div id="gameOverScreen" class="overlay-screen hidden">
-            <h1>CRASHED!</h1>
-            <p style="font-size: 20px;">Final Score: <span id="finalScore" style="color:#00e5ff;">0</span></p>
-            <button class="btn-action" onclick="restartGame()">TRY AGAIN</button>
+        <!-- Level Complete Modal -->
+        <div id="winScreen" class="apple-overlay hidden">
+            <div class="apple-card">
+                <div class="apple-title" style="color: var(--apple-green);">Race Finished!</div>
+                <div class="apple-subtitle" id="winSub">Qualified for Next Round</div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-val" id="finalRank" style="color: var(--apple-blue);">1st</div>
+                        <div class="stat-lbl">Position</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val" id="finalLevel">2/5</div>
+                        <div class="stat-lbl">Next Level</div>
+                    </div>
+                </div>
+                <button class="apple-btn" onclick="nextLevel()">Next Race</button>
+            </div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="loseScreen" class="apple-overlay hidden">
+            <div class="apple-card">
+                <div class="apple-title" style="color: var(--apple-red);">Did Not Qualify</div>
+                <div class="apple-subtitle">You must finish in the Top 3 to advance</div>
+                <button class="apple-btn" style="background: rgba(255,255,255,0.15);" onclick="restartLevel()">Try Again</button>
+            </div>
         </div>
     </div>
 
@@ -194,7 +400,6 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Responsive Resolution
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth;
             canvas.height = canvas.parentElement.clientHeight;
@@ -202,33 +407,41 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // State & Input Controls
+        // Level Circuits Data
+        const LEVELS = [
+            { name: "Bahrain GP", length: 1000, targetRank: 3, roadColor: "#2a2a2e", grassColor: "#1c2b1e" },
+            { name: "Monaco GP", length: 1400, targetRank: 3, roadColor: "#222225", grassColor: "#152017" },
+            { name: "Silverstone GP", length: 1800, targetRank: 3, roadColor: "#2c2d30", grassColor: "#19331d" },
+            { name: "Monza GP", length: 2200, targetRank: 2, roadColor: "#28282b", grassColor: "#1b301c" },
+            { name: "Yas Marina GP", length: 2600, targetRank: 1, roadColor: "#212124", grassColor: "#132316" }
+        ];
+
+        let currentLevelIdx = 0;
         let gameRunning = false;
         let speed = 0;
-        let maxSpeed = 15;
-        let distance = 0;
-        let trackOffset = 0;
+        const maxSpeed = 16;
+        let playerProgress = 0;
         let roadCurve = 0;
         let targetCurve = 0;
 
         const inputs = { left: false, right: false, gas: false, brake: false };
 
-        // Keyboard Controls
+        // Bind Keyboard
         window.addEventListener('keydown', e => {
-            if (e.key === 'ArrowLeft' || e.key === 'a') inputs.left = true;
-            if (e.key === 'ArrowRight' || e.key === 'd') inputs.right = true;
-            if (e.key === 'ArrowUp' || e.key === 'w') inputs.gas = true;
-            if (e.key === 'ArrowDown' || e.key === 's') inputs.brake = true;
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') inputs.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') inputs.right = true;
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') inputs.gas = true;
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') inputs.brake = true;
         });
 
         window.addEventListener('keyup', e => {
-            if (e.key === 'ArrowLeft' || e.key === 'a') inputs.left = false;
-            if (e.key === 'ArrowRight' || e.key === 'd') inputs.right = false;
-            if (e.key === 'ArrowUp' || e.key === 'w') inputs.gas = false;
-            if (e.key === 'ArrowDown' || e.key === 's') inputs.brake = false;
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') inputs.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') inputs.right = false;
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') inputs.gas = false;
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') inputs.brake = false;
         });
 
-        // Touch Button Controls
+        // Touch Control Helpers
         function bindTouch(id, key) {
             const btn = document.getElementById(id);
             const start = (e) => { e.preventDefault(); inputs[key] = true; };
@@ -244,154 +457,229 @@
         bindTouch('btnGas', 'gas');
         bindTouch('btnBrake', 'brake');
 
-        // Fixed Player Car
-        const player = {
-            x: 0, // Offset from road center (-1 to 1)
-            y: 0, // Fixed vertical position calculated in loop
-            width: 36,
-            height: 60
-        };
+        // Player & AI Drivers
+        const player = { x: 0, width: 34, height: 64, color: '#0a84ff', name: 'YOU' };
+        let competitors = [];
 
-        // Scenery & Traffic System
-        let traffic = [];
-        let scenery = [];
+        function initCompetitors() {
+            const colors = ['#ff3b30', '#30d158', '#ffd60a', '#bf5af2', '#ff9f0a'];
+            const names = ['VER', 'HAM', 'LEC', 'NOR', 'ALO'];
+            competitors = [];
 
-        function spawnTraffic() {
-            if (Math.random() < 0.02 && traffic.length < 4) {
-                traffic.push({
-                    x: (Math.random() * 1.4 - 0.7),
-                    y: -100,
-                    speed: 3 + Math.random() * 4,
-                    color: ['#0090ff', '#00e676', '#ffea00', '#d500f9'][Math.floor(Math.random() * 4)]
+            for (let i = 0; i < 5; i++) {
+                competitors.push({
+                    id: i,
+                    name: names[i],
+                    color: colors[i],
+                    x: (Math.random() * 1.2 - 0.6),
+                    progress: Math.random() * 80 + 20, // Start slightly ahead
+                    baseSpeed: 10.5 + Math.random() * 3.5,
+                    laneTarget: (Math.random() * 1.2 - 0.6)
                 });
             }
         }
 
         function updateGame() {
-            // Speed logic
-            if (inputs.gas) speed += 0.15;
-            else if (inputs.brake) speed -= 0.3;
-            else speed *= 0.98;
+            const level = LEVELS[currentLevelIdx];
+
+            // Acceleration & Braking Physics
+            if (inputs.gas) speed += 0.16;
+            else if (inputs.brake) speed -= 0.35;
+            else speed *= 0.985;
 
             speed = Math.max(0, Math.min(speed, maxSpeed));
-            distance += speed;
+            playerProgress += speed;
 
-            // Steering Logic
-            if (speed > 0.5) {
-                if (inputs.left) player.x -= 0.03 * (speed / maxSpeed);
-                if (inputs.right) player.x += 0.03 * (speed / maxSpeed);
+            // Lateral Steering
+            if (speed > 0.2) {
+                if (inputs.left) player.x -= 0.038 * (speed / maxSpeed);
+                if (inputs.right) player.x += 0.038 * (speed / maxSpeed);
             }
 
-            // Road Track Curvature Logic
-            if (Math.random() < 0.01) {
-                targetCurve = (Math.random() - 0.5) * 2;
+            // Track Curvature Dynamics
+            if (Math.random() < 0.015) {
+                targetCurve = (Math.random() - 0.5) * 2.2;
             }
-            roadCurve += (targetCurve - roadCurve) * 0.02;
-            player.x -= roadCurve * (speed / maxSpeed) * 0.012; // Drag player around bends
+            roadCurve += (targetCurve - roadCurve) * 0.025;
+            player.x -= roadCurve * (speed / maxSpeed) * 0.012;
 
-            // Off-Road Slowdown
-            if (Math.abs(player.x) > 0.75) {
+            // Grass Friction Slowdown
+            if (Math.abs(player.x) > 0.72) {
                 speed *= 0.92;
             }
 
-            // Spawn & Move Traffic relative to player fixed perspective
-            spawnTraffic();
-            const roadWidth = canvas.width * 0.55;
-            const roadCenter = canvas.width / 2;
+            // Update Competitor AI
+            competitors.forEach(ai => {
+                ai.progress += ai.baseSpeed;
+                // AI Lane Steering
+                if (Math.random() < 0.02) ai.laneTarget = (Math.random() * 1.2 - 0.6);
+                ai.x += (ai.laneTarget - ai.x) * 0.02;
 
-            for (let i = traffic.length - 1; i >= 0; i--) {
-                let car = traffic[i];
-                car.y += (speed - car.speed); // Moves according to relative speed
-
-                // Collision Detection with Fixed Player
-                const playerScreenX = roadCenter + player.x * (roadWidth / 2);
-                const playerScreenY = canvas.height - 120;
-                const carScreenX = roadCenter + car.x * (roadWidth / 2);
-
-                if (Math.abs(carScreenX - playerScreenX) < 30 && Math.abs(car.y - playerScreenY) < 50) {
-                    endGame();
+                // Collision Detection with Player
+                const relativeY = (ai.progress - playerProgress);
+                if (Math.abs(relativeY) < 45 && Math.abs(ai.x - player.x) < 0.35) {
+                    speed *= 0.7; // Crash bounce penalty
+                    ai.baseSpeed *= 0.9;
                 }
-
-                // Remove out-of-bounds traffic
-                if (car.y > canvas.height + 100 || car.y < -200) {
-                    traffic.splice(i, 1);
-                }
-            }
-        }
-
-        function drawTrack() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Grass
-            ctx.fillStyle = '#1b381e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            const roadWidth = canvas.width * 0.55;
-            const roadLeft = (canvas.width - roadWidth) / 2 + (roadCurve * 15);
-
-            // Red/White Outer Kerbs
-            ctx.fillStyle = Math.floor(distance / 20) % 2 === 0 ? '#ff1744' : '#ffffff';
-            ctx.fillRect(roadLeft - 12, 0, 12, canvas.height);
-            ctx.fillRect(roadLeft + roadWidth, 0, 12, canvas.height);
-
-            // Asphalt Road
-            ctx.fillStyle = '#2c2c2c';
-            ctx.fillRect(roadLeft, 0, roadWidth, canvas.height);
-
-            // Scrolling Center Lane Stripes
-            ctx.fillStyle = '#ffffff';
-            const stripeHeight = 30;
-            const stripeGap = 20;
-            const offset = (distance * 2) % (stripeHeight + stripeGap);
-
-            for (let y = -stripeHeight + offset; y < canvas.height; y += stripeHeight + stripeGap) {
-                ctx.fillRect(roadLeft + roadWidth / 2 - 3, y, 6, stripeHeight);
-            }
-
-            // Render AI Traffic
-            traffic.forEach(car => {
-                const carX = roadLeft + (car.x + 0.8) * (roadWidth / 1.6);
-                drawCar(carX, car.y, car.color, false);
             });
 
-            // Render FIXED Player Car
-            const playerX = roadLeft + (player.x + 0.8) * (roadWidth / 1.6);
-            player.y = canvas.height - 120;
-            drawCar(playerX, player.y, '#e10600', true);
+            // Check Finish Line Completion
+            if (playerProgress >= level.length) {
+                gameRunning = false;
+                const rank = calculateRank();
+                if (rank <= level.targetRank) {
+                    showWinScreen(rank);
+                } else {
+                    showLoseScreen();
+                }
+            }
         }
 
-        function drawCar(x, y, color, isPlayer) {
+        function calculateRank() {
+            let rank = 1;
+            competitors.forEach(ai => {
+                if (ai.progress > playerProgress) rank++;
+            });
+            return rank;
+        }
+
+        // Vector Car Rendering Engine (Apple Standard visual layout)
+        function drawF1Car(x, y, color, isPlayer = false) {
             ctx.save();
             ctx.translate(x, y);
 
-            // Wheels
-            ctx.fillStyle = '#000';
-            ctx.fillRect(-18, -22, 6, 12);
-            ctx.fillRect(12, -22, 6, 12);
-            ctx.fillRect(-18, 12, 6, 12);
-            ctx.fillRect(12, 12, 6, 12);
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.beginPath();
+            ctx.roundRect(-18, -26, 36, 56, 10);
+            ctx.fill();
 
-            // Main Body
+            // Tires
+            ctx.fillStyle = '#1c1c1e';
+            ctx.fillRect(-20, -22, 7, 14); // Front Left
+            ctx.fillRect(13, -22, 7, 14);  // Front Right
+            ctx.fillRect(-21, 12, 8, 16);  // Rear Left
+            ctx.fillRect(13, 12, 8, 16);   // Rear Right
+
+            // Tire Rims Highlight
+            ctx.fillStyle = '#8e8e93';
+            ctx.fillRect(-18, -18, 3, 6);
+            ctx.fillRect(15, -18, 3, 6);
+
+            // Main Body Chassis
             ctx.fillStyle = color;
-            ctx.fillRect(-12, -20, 24, 40);
+            ctx.beginPath();
+            ctx.moveTo(0, -28);
+            ctx.lineTo(8, -14);
+            ctx.lineTo(10, 8);
+            ctx.lineTo(13, 18);
+            ctx.lineTo(-13, 18);
+            ctx.lineTo(-10, 8);
+            ctx.lineTo(-8, -14);
+            ctx.closePath();
+            ctx.fill();
 
-            // Cockpit
-            ctx.fillStyle = '#111';
-            ctx.fillRect(-6, -6, 12, 14);
+            // Cockpit & Driver Helmet
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.ellipse(0, -2, 5, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff'; // Helmet
+            ctx.beginPath();
+            ctx.arc(0, -2, 3, 0, Math.PI * 2);
+            ctx.fill();
 
             // Wings
-            ctx.fillStyle = '#222';
-            ctx.fillRect(-16, -25, 32, 5); // Front Wing
-            ctx.fillRect(-16, 18, 32, 6);  // Rear Wing
+            ctx.fillStyle = '#1c1c1e';
+            ctx.fillRect(-17, -28, 34, 5); // Front Wing
+            ctx.fillRect(-18, 20, 36, 7);  // Rear Wing
 
-            // Player Highlight Effect
-            if (isPlayer) {
-                ctx.strokeStyle = '#00e5ff';
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(-13, -21, 26, 42);
-            }
+            // Rear Rain Light Indicator
+            ctx.fillStyle = isPlayer ? '#30d158' : '#ff3b30';
+            ctx.fillRect(-2, 25, 4, 3);
 
             ctx.restore();
+        }
+
+        function drawTrack() {
+            const level = LEVELS[currentLevelIdx];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Grass Field
+            ctx.fillStyle = level.grassColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const roadWidth = canvas.width * 0.58;
+            const roadLeft = (canvas.width - roadWidth) / 2 + (roadCurve * 18);
+
+            // Apple Kerbs (Red & White)
+            ctx.fillStyle = Math.floor(playerProgress / 20) % 2 === 0 ? '#ff3b30' : '#ffffff';
+            ctx.fillRect(roadLeft - 10, 0, 10, canvas.height);
+            ctx.fillRect(roadLeft + roadWidth, 0, 10, canvas.height);
+
+            // Main Asphalt Track
+            ctx.fillStyle = level.roadColor;
+            ctx.fillRect(roadLeft, 0, roadWidth, canvas.height);
+
+            // Lane Divider Lines
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            const stripeHeight = 28;
+            const stripeGap = 22;
+            const offset = playerProgress % (stripeHeight + stripeGap);
+
+            for (let y = -stripeHeight + offset; y < canvas.height; y += stripeHeight + stripeGap) {
+                ctx.fillRect(roadLeft + roadWidth / 2 - 2, y, 4, stripeHeight);
+            }
+
+            // Finish Line Rendering
+            const remainingDist = level.length - playerProgress;
+            if (remainingDist < canvas.height) {
+                const finishY = canvas.height - 140 - remainingDist;
+                ctx.fillStyle = '#ffffff';
+                for (let i = 0; i < roadWidth; i += 16) {
+                    ctx.fillRect(roadLeft + i, finishY, 8, 8);
+                    ctx.fillRect(roadLeft + i + 8, finishY + 8, 8, 8);
+                }
+            }
+
+            // Draw Competitor AI Cars
+            competitors.forEach(ai => {
+                const relY = canvas.height - 140 - (ai.progress - playerProgress);
+                if (relY > -100 && relY < canvas.height + 100) {
+                    const aiX = roadLeft + (ai.x + 0.8) * (roadWidth / 1.6);
+                    drawF1Car(aiX, relY, ai.color, false);
+                }
+            });
+
+            // Draw Player Fixed Car
+            const playerScreenX = roadLeft + (player.x + 0.8) * (roadWidth / 1.6);
+            const playerScreenY = canvas.height - 140;
+            drawF1Car(playerScreenX, playerScreenY, player.color, true);
+        }
+
+        function updateUI() {
+            const level = LEVELS[currentLevelIdx];
+            document.getElementById('levelDisplay').textContent = `${currentLevelIdx + 1}/5`;
+
+            const rank = calculateRank();
+            const rankSuffix = ["st", "nd", "rd", "th", "th", "th"][rank - 1];
+            document.getElementById('rankDisplay').textContent = `${rank}${rankSuffix}`;
+
+            const remaining = Math.max(0, Math.round(level.length - playerProgress));
+            document.getElementById('distDisplay').textContent = `${remaining}m`;
+
+            // Update Standings Leaderboard Box
+            const standings = [{ name: 'YOU', progress: playerProgress, isPlayer: true }, ...competitors]
+                .sort((a, b) => b.progress - a.progress);
+
+            const lbRows = document.getElementById('lbRows');
+            lbRows.innerHTML = standings.slice(0, 4).map((car, idx) => `
+                <div class="lb-row ${car.isPlayer ? 'player' : ''}">
+                    <span>${idx + 1}. ${car.name}</span>
+                    <span>${Math.round(car.progress)}m</span>
+                </div>
+            `).join('');
         }
 
         function gameLoop() {
@@ -399,34 +687,62 @@
 
             updateGame();
             drawTrack();
-
-            // UI Updates
-            document.getElementById('speed').textContent = Math.round(speed * 18);
-            document.getElementById('score').textContent = Math.floor(distance / 10);
+            updateUI();
 
             requestAnimationFrame(gameLoop);
         }
 
+        function updateLevelInfo() {
+            const level = LEVELS[currentLevelIdx];
+            document.getElementById('trackName').textContent = `Level ${currentLevelIdx + 1} — ${level.name}`;
+            document.getElementById('raceDist').textContent = `${level.length}m`;
+        }
+
         function startGame() {
             document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('gameOverScreen').classList.add('hidden');
-            gameRunning = true;
+            document.getElementById('winScreen').classList.add('hidden');
+            document.getElementById('loseScreen').classList.add('hidden');
+
+            playerProgress = 0;
             speed = 0;
-            distance = 0;
             player.x = 0;
-            traffic = [];
+            initCompetitors();
+
+            gameRunning = true;
             gameLoop();
         }
 
-        function endGame() {
-            gameRunning = false;
-            document.getElementById('finalScore').textContent = Math.floor(distance / 10);
-            document.getElementById('gameOverScreen').classList.remove('hidden');
+        function showWinScreen(rank) {
+            const winSub = currentLevelIdx === 4 ? "Championship Winner!" : "Qualified for Next Circuit";
+            document.getElementById('winSub').textContent = winSub;
+
+            const rankSuffix = ["st", "nd", "rd"][rank - 1];
+            document.getElementById('finalRank').textContent = `${rank}${rankSuffix}`;
+            document.getElementById('finalLevel').textContent = `${currentLevelIdx + 1}/5`;
+
+            document.getElementById('winScreen').classList.remove('hidden');
         }
 
-        function restartGame() {
-            startGame();
+        function showLoseScreen() {
+            document.getElementById('loseScreen').classList.remove('hidden');
         }
+
+        function nextLevel() {
+            currentLevelIdx = (currentLevelIdx + 1) % LEVELS.length;
+            updateLevelInfo();
+            document.getElementById('winScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function restartLevel() {
+            updateLevelInfo();
+            document.getElementById('loseScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        // Init
+        updateLevelInfo();
+        drawTrack();
     </script>
 </body>
 </html>
